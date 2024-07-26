@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define MAX_TEXT_SIZE 10000
+#define ALPHABET_SIZE 26
+double englishLetterFrequencies[ALPHABET_SIZE] = {
+    8.167, 1.492, 2.782, 4.253, 12.702, 2.228, 2.015, 6.094, 
+    6.966, 0.153, 0.772, 4.025, 2.406, 6.749, 7.507, 1.929, 
+    0.095, 5.987, 6.327, 9.056, 2.758, 0.978, 2.360, 0.150, 
+    1.974, 0.074
+};
+typedef struct {
+    char letter;
+    double frequency;
+} Frequency;
+int compareFrequencies(const void *a, const void *b) {
+    return ((Frequency *)b)->frequency - ((Frequency *)a)->frequency;
+}
+void analyzeFrequency(const char *text, Frequency *frequencies) {
+    int count[ALPHABET_SIZE] = {0}, length = 0;
+    for (int i = 0; text[i]; i++)
+        if ((text[i] >= 'A' && text[i] <= 'Z') || (text[i] >= 'a' && text[i] <= 'z')) 
+            count[(text[i] & 31) - 1]++, length++;
+    for (int i = 0; i < ALPHABET_SIZE; i++) 
+        frequencies[i] = (Frequency){ 'A' + i, (double)count[i] / length * 100 };
+    qsort(frequencies, ALPHABET_SIZE, sizeof(Frequency), compareFrequencies);
+}
+void generatePossiblePlaintexts(const char *ciphertext, Frequency *ciphertextFrequencies, int topN) {
+    for (int i = 0; i < topN; i++) {
+        char substitution[ALPHABET_SIZE];
+        for (int j = 0; j < ALPHABET_SIZE; j++) substitution[ciphertextFrequencies[j].letter - 'A'] = 'A' + j;
+        printf("Possible plaintext #%d:\n", i + 1);
+        for (int k = 0; ciphertext[k]; k++) {
+            char c = ciphertext[k];
+            if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) 
+                printf("%c", substitution[(c & 31) - 1] + (c & 32));
+            else 
+                printf("%c", c);
+        }
+        printf("\n\n");
+    }
+}
+int main() {
+    char ciphertext[MAX_TEXT_SIZE];
+    int topN;
+    printf("Enter the ciphertext: ");
+    fgets(ciphertext, MAX_TEXT_SIZE, stdin);
+    ciphertext[strcspn(ciphertext, "\n")] = 0;
+    printf("Enter the number of possible plaintexts to display: ");
+    scanf("%d", &topN);
+    Frequency ciphertextFrequencies[ALPHABET_SIZE];
+    analyzeFrequency(ciphertext, ciphertextFrequencies);
+    generatePossiblePlaintexts(ciphertext, ciphertextFrequencies, topN);
+    return 0;
+}
